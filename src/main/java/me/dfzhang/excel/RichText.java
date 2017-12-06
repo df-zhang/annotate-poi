@@ -1,4 +1,4 @@
-package me.dfzhang.excel.model;
+package me.dfzhang.excel;
 
 /**
  * Rich text unicode string. These strings can have fonts applied to arbitary parts of the string.

@@ -6,17 +6,17 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * @ClassName ExcelMultiRow
+ * @ClassName ExcelRow
  * 
  * @Version v1.0
- * @Date 2017年12月6日 上午12:58:07
+ * @Date 2017年12月7日 上午12:29:01
  * @Author 854154025@qq.com
  * 
  * @Description TODO
  * 
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(value = ElementType.FIELD)
-public @interface ExcelMultiRow {
-
+@Target(value = ElementType.TYPE)
+public @interface ExcelRow {
+	Style style() default @Style();
 }

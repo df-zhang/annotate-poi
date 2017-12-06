@@ -27,5 +27,7 @@ public @interface ExcelTemplate {
 
 	ExcelType type() default ExcelType.XLS;
 
-	Headers headers() default @Headers({ @Header });
+	Header[] headers() default {};
+
+	Style style() default @Style();
 }

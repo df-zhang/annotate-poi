@@ -18,5 +18,11 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(value = ElementType.ANNOTATION_TYPE)
 public @interface Header {
+	int column();
 
+	String key();
+
+	String value();
+
+	Style style() default @Style();
 }

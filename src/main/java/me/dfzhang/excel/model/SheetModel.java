@@ -1,17 +1,23 @@
 package me.dfzhang.excel.model;
 
 /**
- * @ClassName DefaultSheetModel
+ * @ClassName SheetModel
  * 
  * @Version v1.0
- * @Date 2017年12月5日 下午10:10:03
+ * @Date 2017年12月6日 下午10:56:42
  * @Author 854154025@qq.com
  * 
  * @Description TODO
  * 
  */
-public interface SheetModel extends Model {
-	HeaderModel header();
+public class SheetModel {
+	public SheetModel() {
+	}
 
-	RowModel row();
+	public SheetModel(String name) {
+	}
+
+	public SheetModel(String name, int page, int size) {
+	}
+
 }

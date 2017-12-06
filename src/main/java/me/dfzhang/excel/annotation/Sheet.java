@@ -23,4 +23,6 @@ public @interface Sheet {
 	String name() default "sheet1";
 
 	int size() default 65535;
+
+	Style style() default @Style();
 }

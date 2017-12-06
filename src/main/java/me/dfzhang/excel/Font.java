@@ -1,4 +1,4 @@
-package me.dfzhang.excel.model;
+package me.dfzhang.excel;
 
 public interface Font {
 	/**
