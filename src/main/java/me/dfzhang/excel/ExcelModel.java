@@ -1,31 +1,28 @@
 package me.dfzhang.excel;
 
-import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
-import org.apache.poi.ss.usermodel.Header;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
+import me.dfzhang.excel.annotation.ExcelTemplate;
 import me.dfzhang.excel.model.HeaderModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
@@ -41,21 +38,34 @@ import me.dfzhang.excel.style.ExcelType;
  * @Description TODO
  * 
  */
-public class ExcelModel {
+public class ExcelModel<T> {
 	Workbook workbook;
-	List<Sheet> sheets = new ArrayList<>();
-
-	Class<?> templateClass;
+	List<SheetModel> sheetModels;
+	List<HeaderModel> headerModels;
 	InfoModel infoModel;
 
 	Editor editor;
 
-	public static ExcelModel template(Class<?> cls) {
-		return new ExcelModel(cls);
-	}
-
-	private ExcelModel(Class<?> cls) {
-		templateClass = cls;
+	ExcelModel(InfoModel infoModel, List<SheetModel> sheetModels, List<HeaderModel> headerModels) {
+		this.editor = new Editor();
+		this.infoModel = infoModel;
+		this.headerModels = headerModels;
+		this.sheetModels = sheetModels;
+		Collections.sort(this.headerModels);
+		int index = 0;
+		for (HeaderModel headerModel : this.headerModels) {
+			headerModel.setColumn(index++);
+		}
+		index = 0;
+		for (SheetModel sheetModel : this.sheetModels) {
+			sheetModel.setPage(index++);
+		}
+		Collections.sort(this.sheetModels);
+		if (ExcelType.XLS == infoModel.getType()) {
+			workbook = new HSSFWorkbook();
+		} else {
+			workbook = new SXSSFWorkbook(1000);
+		}
 	}
 
 	public Editor editor() {
@@ -67,82 +77,85 @@ public class ExcelModel {
 		Sheet curSheet;
 		SheetModel curSheetInfo;
 		int startRow = 0;
-		ExportModel exportModel = new ExportModel();
+		ExportModel exportModel;
+		private boolean hasHeader;
+		private int maxCellNum = headerModels.size();
 
 		Editor() {
-			if (ExcelType.XLS == infoModel.getType()) {
-				workbook = new HSSFWorkbook();
-			} else {
-				workbook = new SXSSFWorkbook(1000);
-			}
+			exportModel = new ExportModel();
 			sheets = new ArrayList<>(sheets.size());
-			curSheet = sheets.get(0);
-			// curSheet = workbook.createSheet(curSheetInfo.getName());
+			Sheet sheet;
+			Row row = null;
+			Cell cell = null;
+			CellStyle cellStyle = null;
+			for (SheetModel sheetModel : sheetModels) {
+				sheet = workbook.createSheet(sheetModel.getName());
+				if (headerModels.size() > 0) {
+					row = curSheet.createRow(0);
+					cellStyle = workbook.createCellStyle();
+					cellStyle.setWrapText(true);
+					cellStyle.setAlignment(CellStyle.ALIGN_CENTER);
+					for (HeaderModel header : headerModels) {
+						cell = row.createCell(header.getColumn());
+						cell.setCellStyle(cellStyle);
+						cell.setCellValue(header.getValue());
+					}
+				}
+				sheets.add(sheet);
+			}
+			if (headerModels.size() > 0) {
+				hasHeader = true;
+				startRow++;
+			}
 
-//			if (headers.size() > 0) {
-//				Row row = curSheet.createRow(startRow);
-//				startRow++;
-//				CellStyle cellStyle = workbook.createCellStyle();
-//				cellStyle.setWrapText(true);
-//				cellStyle.setAlignment(CellStyle.ALIGN_CENTER);
-//				List<HeaderModel> HeaderModels = new ArrayList<>(headers.values());
-//				resort(HeaderModels);
-//
-//				Cell cell = null;
-//				int i = 0;
-//				for (HeaderModel header : HeaderModels) {
-//					cell = row.createCell(i++);
-//					cell.setCellStyle(cellStyle);
-//					cell.setCellValue(header.getValue());
-//				}
-//			}
+			curSheetInfo = sheetModels.get(0);
+			curSheet = sheets.get(0);
+
 		}
 
 		public Editor useSheet(int num) {
-			curSheet = sheets.get(num - 1);
+			num--;
+			curSheetInfo = sheetModels.get(num);
+			curSheet = sheets.get(num);
 			startRow = curSheet.getLastRowNum();
 			return this;
 		}
 
-		public Editor write(Collection<?> col) {
-//			if (headers.size() > 0) {
-//				startRow = 1;
-//			}
+		public Editor write(Collection<T> col) {
+			if (hasHeader) {
+				startRow = 1;
+			} else {
+				startRow = 0;
+			}
 			return append(col);
 		}
 
-		public Editor append(Collection<?> col) {
-//			List<Map<String, String>> datas = new ArrayList<>(col.size());
-//			Map<String, String> map = null;
-//			Row row = null;
-//			Collection<HeaderModel> HeaderModels = headers.values();
-//
-//			int maxCell = HeaderModels.size();
-//			int fullStart = maxCell;
-//			for (Object object : col) {
-//				datas.add(map = ReflectionUtils.describe(object));
-//				row = curSheet.createRow(startRow++);
-//				map.remove("class");
-//				for (HeaderModel header : HeaderModels) {
-//					row.createCell(header.getColumn()).setCellValue(map.get(header.getKey()));
-//					map.remove(header.getKey());
-//				}
-//				if (!map.isEmpty()) {
-//					fullStart = maxCell;
-//					for (Entry<String, String> entry : map.entrySet()) {
-//						row.createCell(fullStart++).setCellValue(entry.getValue());
-//					}
-//				}
-//			}
+		public Editor append(Collection<T> col) {
+			List<Map<String, String>> datas = new ArrayList<>(col.size());
+			Map<String, String> map = null;
+			Row row = null;
+
+			int fullStart = maxCellNum;
+			for (T object : col) {
+				// datas.add(map = ReflectUtils.describe(object));
+				row = curSheet.createRow(startRow++);
+				map.remove("class");
+				for (HeaderModel header : headerModels) {
+					row.createCell(header.getColumn()).setCellValue(map.get(header.getKey()));
+					map.remove(header.getKey());
+				}
+				if (!map.isEmpty()) {
+					fullStart = maxCellNum;
+					for (Entry<String, String> entry : map.entrySet()) {
+						row.createCell(fullStart++).setCellValue(entry.getValue());
+					}
+				}
+			}
 			return this;
 		}
 
-		void resort(List<HeaderModel> headers) {
-			Collections.sort(headers);
-			int i = 0;
-			for (HeaderModel header : headers) {
-				header.setColumn(i++);
-			}
+		void addRow(int rownum, T t) {
+			// PropertyDescriptor descriptor = new PropertyDescriptor(propertyName, beanClass, readMethodName, writeMethodName);
 		}
 
 		public ExportModel exporter() {

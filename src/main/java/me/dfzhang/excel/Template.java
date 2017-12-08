@@ -5,6 +5,7 @@ import java.util.List;
 import me.dfzhang.excel.annotation.ExcelTemplate;
 import me.dfzhang.excel.model.HeaderModel;
 import me.dfzhang.excel.model.InfoModel;
+import me.dfzhang.excel.model.SheetModel;
 
 /**
  * @ClassName Template
@@ -18,9 +19,12 @@ import me.dfzhang.excel.model.InfoModel;
  */
 @ExcelTemplate
 public abstract class Template {
-	public abstract List<HeaderModel> headers();
-	
-	public abstract InfoModel info();
-	
-	
+	public Template() {
+	}
+
+	public abstract List<HeaderModel> headerModels();
+
+	public abstract InfoModel infoModel();
+
+	public abstract List<SheetModel> sheetModels();
 }

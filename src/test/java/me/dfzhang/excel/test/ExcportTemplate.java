@@ -8,6 +8,7 @@ import me.dfzhang.excel.annotation.ExcelCell;
 import me.dfzhang.excel.annotation.ExcelTemplate;
 import me.dfzhang.excel.model.HeaderModel;
 import me.dfzhang.excel.model.InfoModel;
+import me.dfzhang.excel.model.SheetModel;
 
 /**
  * @ClassName ExcportTemplate
@@ -25,17 +26,23 @@ public class ExcportTemplate extends Template {
 	private String name;
 
 	public static void main(String[] args) {
-		
+
 	}
 
 	@Override
-	public List<HeaderModel> headers() {
+	public List<HeaderModel> headerModels() {
 		// TODO Auto-generated method stub
 		return null;
 	}
 
 	@Override
-	public InfoModel info() {
+	public InfoModel infoModel() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public List<SheetModel> sheetModels() {
 		// TODO Auto-generated method stub
 		return null;
 	}
