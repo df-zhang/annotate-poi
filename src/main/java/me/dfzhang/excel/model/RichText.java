@@ -1,4 +1,6 @@
-package me.dfzhang.excel;
+package me.dfzhang.excel.model;
+
+import me.dfzhang.excel.style.Font;
 
 /**
  * Rich text unicode string. These strings can have fonts applied to arbitary parts of the string.

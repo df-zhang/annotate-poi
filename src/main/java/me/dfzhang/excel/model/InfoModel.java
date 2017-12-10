@@ -25,12 +25,12 @@ public class InfoModel {
 	}
 
 	public InfoModel(String name) {
-		this(name, ExcelType.XLSX);
+		this(name, ExcelType.XLS);
 	}
 
 	public InfoModel(String name, ExcelType type) {
-		this.name = name;
-		this.type = type;
+		setName(name);
+		setType(type);
 	}
 
 	/**
@@ -80,6 +80,7 @@ public class InfoModel {
 	 */
 	public void setType(ExcelType type) {
 		this.type = type;
+		sufix = type.getSufix();
 	}
 
 }

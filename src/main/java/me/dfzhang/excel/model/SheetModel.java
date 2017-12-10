@@ -19,9 +19,13 @@ public class SheetModel implements Comparable<SheetModel> {
 	}
 
 	public SheetModel(String name) {
+		this(name, 0, 0);
 	}
 
 	public SheetModel(String name, int page, int maxSize) {
+		setName(name);
+		setPage(page);
+		setMaxSize(maxSize);
 	}
 
 	/**

@@ -2,7 +2,7 @@ package me.dfzhang.excel;
 
 import java.util.List;
 
-import me.dfzhang.excel.model.HeaderModel;
+import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
 
@@ -16,20 +16,12 @@ import me.dfzhang.excel.model.SheetModel;
  * @Description TODO
  * 
  */
-public class TemplateResolver<T extends Template> extends ExcelResolver<T> {
+public class TemplateResolver<T extends Template> extends AbstractExcelResolver {
 	private Template template;
 
-	public TemplateResolver() {
-		try {
-			template = getTClass().newInstance();
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
-	}
-
-	@Override
-	public ExcelModel<T> resolve() {
-		return new ExcelModel<>(template.infoModel(), template.sheetModels(), template.headerModels());
+	public TemplateResolver(Template template) {
+		super(template.getClass());
+		this.template = template;
 	}
 
 	@Override
@@ -38,12 +30,12 @@ public class TemplateResolver<T extends Template> extends ExcelResolver<T> {
 	}
 
 	@Override
-	protected List<SheetModel> resolveSheetInfo() {
+	protected List<SheetModel> resolveSheets() {
 		return template.sheetModels();
 	}
 
 	@Override
-	protected List<HeaderModel> resolveHeaders() {
+	protected List<CellModel> resolveHeaders() {
 		return template.headerModels();
 	}
 

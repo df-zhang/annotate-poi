@@ -2,21 +2,21 @@ package me.dfzhang.excel;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import me.dfzhang.excel.annotation.ExcelCell;
 import me.dfzhang.excel.annotation.ExcelTemplate;
 import me.dfzhang.excel.annotation.Sheet;
-import me.dfzhang.excel.model.HeaderModel;
+import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
 import me.dfzhang.excel.style.ExcelType;
+import me.dfzhang.excel.util.ReflectUtils;
 
 /**
  * @ClassName AnnotationResolver
@@ -28,31 +28,28 @@ import me.dfzhang.excel.style.ExcelType;
  * @Description TODO
  * 
  */
-public class AnnotationResolver extends ExcelResolver {
-	protected ExcelTemplate excelTemplate;
+public final class AnnotationResolver extends AbstractExcelResolver {
+	private ExcelTemplate excelTemplate;
 
-	public AnnotationResolver(Class<?> tClass) {
-		excelTemplate = tClass.getAnnotation(ExcelTemplate.class);
+	public AnnotationResolver(Class<?> tempClass) {
+		super(tempClass);
+		setTempClass(tempClass);
+	}
+
+	/**
+	 * @param tempClass 属性赋值 tempClass
+	 */
+	protected void setTempClass(Class<?> tempClass) {
+		excelTemplate = tempClass.getAnnotation(ExcelTemplate.class);
 		if (excelTemplate == null) {
-			throw new IllegalArgumentException(tClass + " not a excel template");
+			throw new IllegalArgumentException(tempClass + " not a excel template");
 		}
-	}
-
-	public static void main(String[] args) {
-		AnnotationResolver resolver = new AnnotationResolver();
-		resolver.resolve();
-	}
-
-	@Override
-	public <T> ExcelModel<T> resolve() {
-		return new ExcelModel<T>(resolveInfoModel(), resolveSheetInfo(), resolveHeaders());
 	}
 
 	protected InfoModel resolveInfoModel() {
 		InfoModel infoModel = new InfoModel();
 		if (excelTemplate == null) {
-			infoModel.setName(getTClass().getSimpleName());
-			infoModel.setType(ExcelType.XLS);
+			infoModel.setType(ExcelType.XLSX);
 		} else {
 			infoModel.setName(excelTemplate.name());
 			infoModel.setType(excelTemplate.type());
@@ -60,7 +57,7 @@ public class AnnotationResolver extends ExcelResolver {
 		return infoModel;
 	}
 
-	protected List<SheetModel> resolveSheetInfo() {
+	protected List<SheetModel> resolveSheets() {
 		Sheet[] sheets = excelTemplate.sheet();
 		List<SheetModel> sheetInfos = new ArrayList<>(sheets.length);
 		for (Sheet sheet : sheets) {
@@ -69,36 +66,39 @@ public class AnnotationResolver extends ExcelResolver {
 		return sheetInfos;
 	}
 
-	protected List<HeaderModel> resolveHeaders() {
-		List<HeaderModel> headers = new ArrayList<>();
-		Field[] fields = getTClass().getDeclaredFields();
+	protected List<CellModel> resolveHeaders() {
+		Class<?> tempClass = getTempletClass();
+		List<CellModel> cellModels = new ArrayList<>();
+		Set<Field> fields = ReflectUtils.getFields(tempClass);
 		try {
 			PropertyDescriptor descriptor = null;
 			Method readMethod = null;
 			ExcelCell excelCell = null;
 			String filedName;
-			HeaderModel header = null;
+			CellModel cellModel = null;
 			for (Field field : fields) {
 				if (Modifier.isStatic(field.getModifiers())) {
 					continue;
 				}
 				filedName = field.getName();
 				excelCell = field.getAnnotation(ExcelCell.class);
-				descriptor = new PropertyDescriptor(filedName, getTClass());
-				if ((readMethod = descriptor.getReadMethod()) != null) {
-					if (excelCell == null) {
+				if (excelCell == null) {
+					descriptor = new PropertyDescriptor(filedName, tempClass);
+					if ((readMethod = descriptor.getReadMethod()) != null) {
 						excelCell = readMethod.getAnnotation(ExcelCell.class);
 					}
 				}
+
 				if (excelCell == null) {
 					continue;
 				}
-				header = new HeaderModel(excelCell.column(), filedName, excelCell.header());
-				headers.add(header);
+
+				cellModel = new CellModel(excelCell.column(), filedName, excelCell.header());
+				cellModels.add(cellModel);
 			}
 		} catch (IntrospectionException e) {
 			e.printStackTrace();
 		}
-		return headers;
+		return cellModels;
 	}
 }

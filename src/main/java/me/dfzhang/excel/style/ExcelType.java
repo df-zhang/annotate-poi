@@ -11,19 +11,36 @@ package me.dfzhang.excel.style;
  * 
  */
 public enum ExcelType {
-	XLS("xls"), XLSX("xlsx");
+	XLS("xls", 256, 65536), XLSX("xlsx", 16384, 1048576);
 
-	private String value;
+	private String sufix;
+	private int maxColumn;
+	private int maxRow;
 
-	private ExcelType(String value) {
-		this.value = value;
+	private ExcelType(String sufix, int maxColumn, int maxRow) {
+		this.sufix = sufix;
+		this.maxColumn = maxColumn;
+		this.maxRow = maxRow;
 	}
 
 	/**
-	 * @return value
+	 * @return sufix
 	 */
-	public String getValue() {
-		return value;
+	public String getSufix() {
+		return sufix;
 	}
 
+	/**
+	 * @return maxColumn
+	 */
+	public int getMaxColumn() {
+		return maxColumn;
+	}
+
+	/**
+	 * @return maxRow
+	 */
+	public int getMaxRow() {
+		return maxRow;
+	}
 }

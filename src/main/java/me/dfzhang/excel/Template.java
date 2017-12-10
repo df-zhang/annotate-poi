@@ -3,7 +3,7 @@ package me.dfzhang.excel;
 import java.util.List;
 
 import me.dfzhang.excel.annotation.ExcelTemplate;
-import me.dfzhang.excel.model.HeaderModel;
+import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
 
@@ -22,7 +22,7 @@ public abstract class Template {
 	public Template() {
 	}
 
-	public abstract List<HeaderModel> headerModels();
+	public abstract List<CellModel> headerModels();
 
 	public abstract InfoModel infoModel();
 

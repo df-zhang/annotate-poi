@@ -1,4 +1,4 @@
-package me.dfzhang.excel;
+package me.dfzhang.excel.util;
 
 import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;

@@ -1,10 +1,11 @@
 package me.dfzhang.excel;
 
-import java.beans.PropertyDescriptor;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.apache.commons.beanutils.BeanUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Cell;
@@ -22,67 +22,68 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
-import me.dfzhang.excel.annotation.ExcelTemplate;
-import me.dfzhang.excel.model.HeaderModel;
+import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
 import me.dfzhang.excel.style.ExcelType;
 
 /**
- * @ClassName com.horige.excel.ExcelBuilder
+ * @ClassName ExcelModel
  * 
  * @Version v1.0
- * @Date 2017年12月1日 下午9:56:33
+ * @Date 2017年12月10日 下午11:29:39
  * @Author 854154025@qq.com
  * 
  * @Description TODO
  * 
  */
-public class ExcelModel<T> {
-	Workbook workbook;
-	List<SheetModel> sheetModels;
-	List<HeaderModel> headerModels;
-	InfoModel infoModel;
+public class ExcelModel {
 
-	Editor editor;
+	private List<SheetModel> sheetModels;
+	private List<CellModel> cellModels;
+	private InfoModel infoModel;
 
-	ExcelModel(InfoModel infoModel, List<SheetModel> sheetModels, List<HeaderModel> headerModels) {
-		this.editor = new Editor();
+	public ExcelModel(InfoModel infoModel, List<SheetModel> sheetModels, List<CellModel> cellModels) {
+
 		this.infoModel = infoModel;
-		this.headerModels = headerModels;
+		this.cellModels = cellModels;
 		this.sheetModels = sheetModels;
-		Collections.sort(this.headerModels);
+		Collections.sort(this.cellModels);
+		Collections.sort(this.sheetModels);
+
 		int index = 0;
-		for (HeaderModel headerModel : this.headerModels) {
-			headerModel.setColumn(index++);
+		for (CellModel CellModel : this.cellModels) {
+			CellModel.setColumn(index++);
 		}
+
 		index = 0;
 		for (SheetModel sheetModel : this.sheetModels) {
 			sheetModel.setPage(index++);
 		}
-		Collections.sort(this.sheetModels);
-		if (ExcelType.XLS == infoModel.getType()) {
-			workbook = new HSSFWorkbook();
-		} else {
-			workbook = new SXSSFWorkbook(1000);
-		}
+
 	}
 
-	public Editor editor() {
-		return editor;
+	public Editor createEditor() {
+		return new Editor();
 	}
 
 	public class Editor {
+		Workbook workbook;
 		List<Sheet> sheets = new ArrayList<>();
 		Sheet curSheet;
 		SheetModel curSheetInfo;
 		int startRow = 0;
 		ExportModel exportModel;
 		private boolean hasHeader;
-		private int maxCellNum = headerModels.size();
+		private int maxCellNum = cellModels.size();
 
 		Editor() {
-			exportModel = new ExportModel();
+			if (ExcelType.XLS == infoModel.getType()) {
+				workbook = new HSSFWorkbook();
+			} else {
+				workbook = new SXSSFWorkbook(1000);
+			}
+			exportModel = new ExportModel(workbook);
 			sheets = new ArrayList<>(sheets.size());
 			Sheet sheet;
 			Row row = null;
@@ -90,20 +91,20 @@ public class ExcelModel<T> {
 			CellStyle cellStyle = null;
 			for (SheetModel sheetModel : sheetModels) {
 				sheet = workbook.createSheet(sheetModel.getName());
-				if (headerModels.size() > 0) {
-					row = curSheet.createRow(0);
+				if (cellModels.size() > 0) {
+					row = sheet.createRow(0);
 					cellStyle = workbook.createCellStyle();
 					cellStyle.setWrapText(true);
 					cellStyle.setAlignment(CellStyle.ALIGN_CENTER);
-					for (HeaderModel header : headerModels) {
+					for (CellModel header : cellModels) {
 						cell = row.createCell(header.getColumn());
 						cell.setCellStyle(cellStyle);
-						cell.setCellValue(header.getValue());
+						cell.setCellValue(header.getHeader());
 					}
 				}
 				sheets.add(sheet);
 			}
-			if (headerModels.size() > 0) {
+			if (cellModels.size() > 0) {
 				hasHeader = true;
 				startRow++;
 			}
@@ -130,17 +131,17 @@ public class ExcelModel<T> {
 			return append(col);
 		}
 
-		public Editor append(Collection<T> col) {
+		public Editor append(Collection<?> col) {
 			List<Map<String, String>> datas = new ArrayList<>(col.size());
 			Map<String, String> map = null;
 			Row row = null;
 
 			int fullStart = maxCellNum;
-			for (T object : col) {
+			for (Object object : col) {
 				// datas.add(map = ReflectUtils.describe(object));
 				row = curSheet.createRow(startRow++);
 				map.remove("class");
-				for (HeaderModel header : headerModels) {
+				for (CellModel header : cellModels) {
 					row.createCell(header.getColumn()).setCellValue(map.get(header.getKey()));
 					map.remove(header.getKey());
 				}
@@ -154,21 +155,35 @@ public class ExcelModel<T> {
 			return this;
 		}
 
-		void addRow(int rownum, T t) {
-			// PropertyDescriptor descriptor = new PropertyDescriptor(propertyName, beanClass, readMethodName, writeMethodName);
-		}
-
 		public ExportModel exporter() {
 			return exportModel;
 		}
 	}
 
 	public class ExportModel {
+		private Workbook workbook;
 
-		ExportModel() {
+		ExportModel(Workbook workbook) {
+			this.workbook = workbook;
 		}
 
-		public void asFile(File file) {
+		public void as(File file) {
+			if (!file.exists()) {
+				int index = file.getName().indexOf('.');
+				if (index < 0) {
+					// 当作目录
+					file.mkdirs();
+				} else {
+					file.getParentFile().mkdirs();
+				}
+			}
+			if (file.isDirectory()) {
+				String name = infoModel.getName();
+				if (name == null || name.isEmpty()) {
+					name = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+				}
+				file = new File(file, name + "." + infoModel.getSufix().toLowerCase());
+			}
 			FileOutputStream out = null;
 			try {
 				out = new FileOutputStream(file);
