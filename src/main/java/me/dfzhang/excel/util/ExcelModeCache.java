@@ -6,23 +6,21 @@ import java.util.concurrent.ConcurrentMap;
 import me.dfzhang.excel.ExcelModel;
 
 public class ExcelModeCache {
-	private final static ConcurrentMap<Class<?>, ExcelModel> CACHE = new ConcurrentHashMap<>();
+	private final static ConcurrentMap<String, ExcelModel> CACHE = new ConcurrentHashMap<>();
 
-	public static ExcelModel get(Class<?> cls) {
-		return CACHE.get(cls);
+	public static ExcelModel get(String key) {
+		return CACHE.get(key);
 	}
 
-	public static ExcelModel putOrReplace(Class<?> cls, ExcelModel excelModel) {
-		if (CACHE.containsKey(cls)) {
-			return CACHE.replace(cls, excelModel);
+	public static ExcelModel putOrReplace(String key, ExcelModel excelModel) {
+		if (CACHE.containsKey(key)) {
+			return CACHE.replace(key, excelModel);
 		} else {
-			ExcelModel old = CACHE.putIfAbsent(cls, excelModel);
+			ExcelModel old = CACHE.putIfAbsent(key, excelModel);
 			if (old != null) {
-				return CACHE.replace(cls, excelModel);
+				return CACHE.replace(key, excelModel);
 			}
 			return null;
 		}
-
 	}
-
 }

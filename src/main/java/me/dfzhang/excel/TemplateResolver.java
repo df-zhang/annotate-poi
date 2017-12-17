@@ -16,10 +16,10 @@ import me.dfzhang.excel.model.SheetModel;
  * @Description TODO
  * 
  */
-public class TemplateResolver<T extends Template> extends AbstractExcelResolver {
-	private Template template;
+public class TemplateResolver<T extends DynamicTemplate> extends AbstractExcelResolver {
+	private DynamicTemplate template;
 
-	public TemplateResolver(Template template) {
+	public TemplateResolver(DynamicTemplate template) {
 		super(template.getClass());
 		this.template = template;
 	}

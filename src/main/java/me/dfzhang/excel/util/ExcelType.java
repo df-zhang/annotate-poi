@@ -1,4 +1,4 @@
-package me.dfzhang.excel.style;
+package me.dfzhang.excel.util;
 
 /**
  * @ClassName com.horige.excel.style.FileType

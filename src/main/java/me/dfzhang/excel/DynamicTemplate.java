@@ -2,13 +2,12 @@ package me.dfzhang.excel;
 
 import java.util.List;
 
-import me.dfzhang.excel.annotation.ExcelTemplate;
 import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
 
 /**
- * @ClassName Template
+ * @ClassName DynamicTemplate
  * 
  * @Version v1.0
  * @Date 2017年12月6日 上午1:05:30
@@ -17,9 +16,8 @@ import me.dfzhang.excel.model.SheetModel;
  * @Description TODO
  * 
  */
-@ExcelTemplate
-public abstract class Template {
-	public Template() {
+public abstract class DynamicTemplate {
+	public DynamicTemplate() {
 	}
 
 	public abstract List<CellModel> headerModels();

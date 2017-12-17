@@ -1,8 +1,6 @@
 package me.dfzhang.excel;
 
 import java.util.List;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 
 import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
@@ -20,7 +18,6 @@ import me.dfzhang.excel.model.SheetModel;
  */
 
 public abstract class AbstractExcelResolver implements ExcelResolver {
-	// private static
 	private Class<?> tempClass;
 
 	public AbstractExcelResolver(Class<?> tempClass) {

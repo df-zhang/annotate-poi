@@ -15,7 +15,7 @@ import me.dfzhang.excel.annotation.Sheet;
 import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
-import me.dfzhang.excel.style.ExcelType;
+import me.dfzhang.excel.util.ExcelType;
 import me.dfzhang.excel.util.ReflectUtils;
 
 /**
@@ -28,18 +28,11 @@ import me.dfzhang.excel.util.ReflectUtils;
  * @Description TODO
  * 
  */
-public final class AnnotationResolver extends AbstractExcelResolver {
+public final class AnnotationResolver extends CachedResolver {
 	private ExcelTemplate excelTemplate;
 
 	public AnnotationResolver(Class<?> tempClass) {
 		super(tempClass);
-		setTempClass(tempClass);
-	}
-
-	/**
-	 * @param tempClass 属性赋值 tempClass
-	 */
-	protected void setTempClass(Class<?> tempClass) {
 		excelTemplate = tempClass.getAnnotation(ExcelTemplate.class);
 		if (excelTemplate == null) {
 			throw new IllegalArgumentException(tempClass + " not a excel template");
@@ -100,5 +93,10 @@ public final class AnnotationResolver extends AbstractExcelResolver {
 			e.printStackTrace();
 		}
 		return cellModels;
+	}
+
+	@Override
+	protected String genKey() {
+		return getTempletClass() + "@";
 	}
 }

@@ -19,6 +19,7 @@ import java.lang.annotation.Target;
 @Target(value = ElementType.FIELD)
 public @interface ExcelCell {
 	public static int i = 0;
+
 	int column() default 0;
 
 	String header() default "";

@@ -2,7 +2,7 @@ package me.dfzhang.excel.model;
 
 import java.util.Date;
 
-import me.dfzhang.excel.style.ExcelType;
+import me.dfzhang.excel.util.ExcelType;
 
 /**
  * @ClassName InfoModel

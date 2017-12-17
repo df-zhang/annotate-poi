@@ -4,19 +4,26 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
+import java.util.Set;
 
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.formula.functions.T;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.RichTextString;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -25,8 +32,9 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
-import me.dfzhang.excel.style.ExcelType;
-
+import me.dfzhang.excel.util.ExcelType;
+import me.dfzhang.excel.util.ReflectUtils;
+	
 /**
  * @ClassName ExcelModel
  * 
@@ -42,25 +50,38 @@ public class ExcelModel {
 	private List<SheetModel> sheetModels;
 	private List<CellModel> cellModels;
 	private InfoModel infoModel;
+	private Map<String, SheetModel> sheetMap = new HashMap<>();
+	private Map<String, CellModel> headerMap = new HashMap<>();
 
-	public ExcelModel(InfoModel infoModel, List<SheetModel> sheetModels, List<CellModel> cellModels) {
-
+	public ExcelModel(InfoModel infoModel, List<SheetModel> sheetModels,
+			List<CellModel> cellModels) {
 		this.infoModel = infoModel;
 		this.cellModels = cellModels;
 		this.sheetModels = sheetModels;
+		verify();
+	}
+
+	void verify() {
 		Collections.sort(this.cellModels);
 		Collections.sort(this.sheetModels);
-
 		int index = 0;
-		for (CellModel CellModel : this.cellModels) {
-			CellModel.setColumn(index++);
+		for (CellModel cellModel : this.cellModels) {
+			cellModel.setColumn(index++);
+			headerMap.put(cellModel.getKey(), cellModel);
 		}
-
+		if (this.cellModels.size() != headerMap.size()) {
+			this.cellModels.clear();
+			this.cellModels.addAll(headerMap.values());
+		}
 		index = 0;
 		for (SheetModel sheetModel : this.sheetModels) {
 			sheetModel.setPage(index++);
+			sheetMap.put(sheetModel.getName(), sheetModel);
 		}
-
+		if (this.sheetModels.size() != sheetMap.size()) {
+			this.sheetModels.clear();
+			this.sheetModels.addAll(sheetMap.values());
+		}
 	}
 
 	public Editor createEditor() {
@@ -114,10 +135,18 @@ public class ExcelModel {
 
 		}
 
-		public Editor useSheet(int num) {
-			num--;
-			curSheetInfo = sheetModels.get(num);
-			curSheet = sheets.get(num);
+		/**
+		 * @Methods useSheet
+		 * 
+		 * @param num start with 1
+		 * @return
+		 * 
+		 * @Description TODO
+		 */
+		public Editor useSheet(int page) {
+			page--;
+			curSheetInfo = sheetModels.get(page);
+			curSheet = sheets.get(page);
 			startRow = curSheet.getLastRowNum();
 			return this;
 		}
@@ -132,27 +161,69 @@ public class ExcelModel {
 		}
 
 		public Editor append(Collection<?> col) {
-			List<Map<String, String>> datas = new ArrayList<>(col.size());
-			Map<String, String> map = null;
-			Row row = null;
-
-			int fullStart = maxCellNum;
 			for (Object object : col) {
-				// datas.add(map = ReflectUtils.describe(object));
-				row = curSheet.createRow(startRow++);
-				map.remove("class");
-				for (CellModel header : cellModels) {
-					row.createCell(header.getColumn()).setCellValue(map.get(header.getKey()));
-					map.remove(header.getKey());
-				}
-				if (!map.isEmpty()) {
-					fullStart = maxCellNum;
-					for (Entry<String, String> entry : map.entrySet()) {
-						row.createCell(fullStart++).setCellValue(entry.getValue());
+				addRow(object);
+			}
+			return this;
+		}
+
+		Row createRow() {
+			return curSheet.createRow(startRow++);
+		}
+
+		Cell createCell(Row row, int column, Object value, boolean isFormula) {
+			Cell cell = row.createCell(column);
+			if (value == null) {
+				cell.setCellValue("");
+			} else {
+				if (isFormula) {
+					cell.setCellFormula((String) value);
+				} else {
+					Class<?> valueClass = value.getClass();
+					if (valueClass.isPrimitive()) {
+						cell.setCellValue((double) value);
+					} else if (Date.class.isInstance(value)) {
+						cell.setCellValue((Date) value);
+					} else if (Calendar.class.isInstance(value)) {
+						cell.setCellValue((Calendar) value);
+					} else if (RichTextString.class.isInstance(value)) {
+						cell.setCellValue((RichTextString) value);
+					} else {
+						cell.setCellValue((String) value);
 					}
 				}
 			}
-			return this;
+			return cell;
+		}
+
+		void addRow(Object object) {
+			if (object == null) {
+				return;
+			}
+			Class<?> objClass = object.getClass();
+			Row row = createRow();
+			String fieldName = null;
+			Method readMethod = null;
+			CellModel header = null;
+			int fullStart = maxCellNum;
+			Set<Field> fields = ReflectUtils.getFields(object.getClass());
+			Object value;
+			for (Field field : fields) {
+				if (!Modifier.isStatic(field.getModifiers())) {
+					readMethod = ReflectUtils.getReaderMethod(objClass, field);
+					value = ReflectUtils.getValue(object, readMethod);
+					if (hasHeader) {
+						header = headerMap.get(fieldName);
+						if (header == null) {
+							createCell(row, fullStart++, value, false);
+						} else {
+							createCell(row, header.getColumn(), value, false);
+						}
+					} else {
+						createCell(row, fullStart++, value, false);
+					}
+				}
+			}
 		}
 
 		public ExportModel exporter() {
@@ -180,7 +251,8 @@ public class ExcelModel {
 			if (file.isDirectory()) {
 				String name = infoModel.getName();
 				if (name == null || name.isEmpty()) {
-					name = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
+					name = LocalDateTime.now()
+							.format(DateTimeFormatter.ofPattern("yyyyMMddHHmmssSSS"));
 				}
 				file = new File(file, name + "." + infoModel.getSufix().toLowerCase());
 			}
@@ -215,7 +287,8 @@ public class ExcelModel {
 		if (Character.isLowerCase(s.charAt(0)))
 			return s;
 		else
-			return (new StringBuilder()).append(Character.toLowerCase(s.charAt(0))).append(s.substring(1)).toString();
+			return (new StringBuilder()).append(Character.toLowerCase(s.charAt(0)))
+					.append(s.substring(1)).toString();
 	}
 
 	// 首字母转大写
@@ -223,7 +296,8 @@ public class ExcelModel {
 		if (Character.isUpperCase(s.charAt(0)))
 			return s;
 		else
-			return (new StringBuilder()).append(Character.toUpperCase(s.charAt(0))).append(s.substring(1)).toString();
+			return (new StringBuilder()).append(Character.toUpperCase(s.charAt(0)))
+					.append(s.substring(1)).toString();
 	}
 
 }

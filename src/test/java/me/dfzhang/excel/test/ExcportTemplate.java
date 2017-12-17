@@ -2,7 +2,7 @@ package me.dfzhang.excel.test;
 
 import java.util.List;
 
-import me.dfzhang.excel.Template;
+import me.dfzhang.excel.DynamicTemplate;
 import me.dfzhang.excel.annotation.Columns;
 import me.dfzhang.excel.annotation.ExcelCell;
 import me.dfzhang.excel.annotation.ExcelTemplate;
@@ -10,7 +10,7 @@ import me.dfzhang.excel.annotation.Sheet;
 import me.dfzhang.excel.model.CellModel;
 import me.dfzhang.excel.model.InfoModel;
 import me.dfzhang.excel.model.SheetModel;
-import me.dfzhang.excel.style.ExcelType;
+import me.dfzhang.excel.util.ExcelType;
 
 /**
  * @ClassName ExcportTemplate
@@ -23,7 +23,7 @@ import me.dfzhang.excel.style.ExcelType;
  * 
  */
 @ExcelTemplate(name = "名字测试", type = ExcelType.XLSX, sheet = { @Sheet(name = "Page1"), @Sheet(name = "Page2"), @Sheet(name = "Page3") })
-public class ExcportTemplate extends Template {
+public class ExcportTemplate extends DynamicTemplate {
 	@ExcelCell(column = Columns.A, header = "Your Name")
 	private String name;
 
